@@ -15,22 +15,7 @@ Convert PDF pages to exactly square (NxN) images with letterboxing, plus extract
 
 ## Requirements
 
-This tool requires **poppler-utils** to be installed on your system:
-
-### Ubuntu/Debian
-```bash
-sudo apt-get install poppler-utils
-```
-
-### macOS
-```bash
-brew install poppler
-```
-
-### CentOS/RHEL
-```bash
-sudo yum install poppler-utils
-```
+No system dependencies required - uses pdf.js for PDF processing.
 
 ## Installation
 
@@ -69,7 +54,7 @@ pdf2square input.pdf --size 512 --dpi 300 --format jpg
 | `--format <fmt>` | Output format: png or jpg | png |
 | `--bg <color>` | Background color (#RRGGBB[AA] or 'transparent') | #ffffffff |
 | `--concurrency <int>` | Max parallel processes | 4 |
-| `--keep-intermediate` | Keep intermediate Poppler renders | false |
+| `--keep-intermediate` | Keep intermediate renders | false |
 
 ### CLI Examples
 
@@ -286,7 +271,6 @@ Note: JPEG format cannot be transparent and will fallback to white background.
 
 Common errors and solutions:
 
-- **"Failed to run pdfinfo"**: Install poppler-utils
 - **"Could not determine page count"**: PDF may be corrupted or password-protected
 - **"No pages to convert"**: Check page range parameters
 

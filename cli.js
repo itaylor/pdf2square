@@ -130,7 +130,7 @@ const [inputPdf, outPrefixArg] = program.args;
     const lastPage = results[results.length - 1].pageNumber;
     console.log(`✅ Done. Wrote pages ${firstPage}-${lastPage} → ${outDir}`);
   } catch (err) {
-    console.error("❌", err.message || err);
+    console.error("❌", err.message || err, err.stack || "");
     process.exit(1);
   }
 })();

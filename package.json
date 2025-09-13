@@ -16,8 +16,9 @@
     "start": "node cli.js"
   },
   "dependencies": {
+    "canvas": "^3.2.0",
     "commander": "^12.1.0",
-    "node-poppler": "^7.2.0",
+    "pdfjs-dist": "^5.4.149",
     "pdf2square": "link:",
     "sharp": "^0.33.4"
   }
