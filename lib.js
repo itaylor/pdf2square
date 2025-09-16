@@ -61,10 +61,9 @@ export async function convert(pathToPdf, options = {}) {
     data: new Uint8Array(data),
     // Node-friendly flags
     useWorkerFetch: false,
-    nativeImageDecoderSupport: "none",
     disableWorker: true,
     isEvalSupported: false,
-    disableFontFace: true,
+    useSystemFonts: true,
   });
   const pdf = await loadingTask.promise;
 
