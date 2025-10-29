@@ -1,5 +1,5 @@
 {
-  "name": "pdf2square",
+  "name": "@itaylor/pdf2square",
   "version": "1.0.0",
   "description": "CLI and Library: Convert PDF pages to exactly NxN images (letterboxed), Poppler + Sharp",
   "type": "module",
@@ -19,7 +19,6 @@
     "canvas": "^3.2.0",
     "commander": "^12.1.0",
     "pdfjs-dist": "^5.4.149",
-    "pdf2square": "link:",
     "sharp": "^0.33.4"
   }
 }
