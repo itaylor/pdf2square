@@ -1,7 +1,7 @@
 {
   "name": "@itaylor/pdf2square",
   "version": "1.0.0",
-  "description": "CLI and Library: Convert PDF pages to exactly NxN images (letterboxed), Poppler + Sharp",
+  "description": "CLI and Library: Convert PDF pages to exactly NxN images (letterboxed), using pdfjs + Sharp",
   "type": "module",
   "main": "./lib.js",
   "types": "./lib.d.ts",
