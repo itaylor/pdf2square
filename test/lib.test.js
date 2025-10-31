@@ -242,6 +242,136 @@ describe('return value structure', () => {
   });
 });
 
+describe('Font loading and console output tests', () => {
+  test('should process hairgrowth PDF without font warnings', async () => {
+    const pdfPath = path.join(
+      __dirname,
+      'hairgrowth_machine_brochure_overdrive.pdf',
+    );
+
+    // Capture console.warn to check for font warnings
+    const originalWarn = console.warn;
+    const warnings = [];
+    console.warn = (...args) => {
+      warnings.push(args.join(' '));
+    };
+
+    try {
+      const result = await convert(pdfPath, {
+        maxPages: 2,
+        size: 896,
+        format: 'png',
+      });
+
+      // Restore console.warn
+      console.warn = originalWarn;
+
+      // Verify conversion worked
+      assert(Array.isArray(result), 'Expected result to be an array');
+      assert(result.length === 2, 'Expected exactly two pages');
+      assert(
+        typeof result[0].base64EncodedImage === 'string',
+        'Expected base64 image on page 1',
+      );
+      assert(
+        typeof result[1].base64EncodedImage === 'string',
+        'Expected base64 image on page 2',
+      );
+      assert(
+        result[0].base64EncodedImage.startsWith('data:image/png;base64,'),
+        'Expected PNG data URL',
+      );
+
+      // Verify no font-related warnings
+      const fontWarnings = warnings.filter(
+        (w) =>
+          w.includes('Unable to load font data') ||
+          w.includes('standardFontDataUrl') ||
+          w.includes('fetchStandardFontData') ||
+          w.includes('font'),
+      );
+
+      assert(
+        fontWarnings.length === 0,
+        `Expected no font warnings, but got: ${fontWarnings.join(', ')}`,
+      );
+
+      // Verify text extraction worked
+      assert(
+        typeof result[0].extractedText === 'string',
+        'Expected extracted text',
+      );
+      assert(
+        result[0].extractedText.length > 0,
+        'Expected non-empty extracted text',
+      );
+    } catch (error) {
+      console.warn = originalWarn;
+      throw error;
+    }
+  });
+
+  test('should have no unexpected console output during normal operation', async () => {
+    const pdfPath = path.join(__dirname, 'example1.pdf');
+
+    // Capture all console methods
+    const originalLog = console.log;
+    const originalWarn = console.warn;
+    const originalError = console.error;
+
+    const logs = [];
+    const warnings = [];
+    const errors = [];
+
+    console.log = (...args) => logs.push(args.join(' '));
+    console.warn = (...args) => warnings.push(args.join(' '));
+    console.error = (...args) => errors.push(args.join(' '));
+
+    try {
+      const result = await convert(pdfPath, {
+        maxPages: 1,
+        size: 512,
+        format: 'png',
+      });
+
+      // Restore console methods
+      console.log = originalLog;
+      console.warn = originalWarn;
+      console.error = originalError;
+
+      // Verify conversion worked
+      assert(Array.isArray(result), 'Expected result to be an array');
+      assert(result.length === 1, 'Expected exactly one page');
+
+      // Verify no unexpected console output
+      assert(
+        logs.length === 0,
+        `Expected no console.log output, but got: ${logs.join(', ')}`,
+      );
+      assert(
+        errors.length === 0,
+        `Expected no console.error output, but got: ${errors.join(', ')}`,
+      );
+
+      // Allow certain expected warnings but not font-related ones
+      const unexpectedWarnings = warnings.filter(
+        (w) => !w.includes('Indexing all PDF objects'), // This is a known PDF.js warning for some PDFs
+      );
+      assert(
+        unexpectedWarnings.length === 0,
+        `Expected no unexpected warnings, but got: ${
+          unexpectedWarnings.join(', ')
+        }`,
+      );
+    } catch (error) {
+      console.log = originalLog;
+      console.warn = originalWarn;
+      console.error = originalError;
+      throw error;
+    }
+  });
+});
+
 describe('Integration tests with real PDF', () => {
   const testPdfPath = path.join(__dirname, 'example1.pdf');
 

@@ -6,7 +6,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
-import { createCanvas } from 'canvas';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
@@ -70,8 +69,8 @@ export async function convert(pathToPdf, options = {}) {
     disableWorker: true,
     isEvalSupported: false,
     useSystemFonts: true,
-    // Configure standard fonts path to eliminate warnings
-    standardFontDataUrl: `file://${standardFontsPath}/`,
+    // Try absolute path without file:// prefix
+    standardFontDataUrl: `${standardFontsPath}/`,
   });
   const pdf = await loadingTask.promise;
 
