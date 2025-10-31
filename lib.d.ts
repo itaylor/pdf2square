@@ -1,5 +1,7 @@
 /**
  * TypeScript declarations for pdf2square library
+ *
+ * Automatically configures PDF.js standard fonts to eliminate font warnings.
  */
 
 export interface ConvertedPDFPage {

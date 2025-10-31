@@ -11,6 +11,10 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 // PDF.js (legacy build recommended for Node)
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
+
+// Resolve path to pdfjs-dist standard fonts to eliminate warnings
+const pdfjsDistPath = path.dirname(require.resolve('pdfjs-dist/package.json'));
+const standardFontsPath = path.join(pdfjsDistPath, 'standard_fonts');
 // Point workerSrc at the installed worker bundle
 // pdfjs.GlobalWorkerOptions.workerSrc = require.resolve(
 //   "pdfjs-dist/legacy/build/pdf.worker.mjs",
@@ -33,6 +37,7 @@ import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
  * @property {string} [format='png'] - Output format: 'png' or 'jpg'
  * @property {string} [bg='#ffffffff'] - Background color (letterbox). Hex #RRGGBB[AA] or 'transparent'
  * @property {number} [concurrency=4] - Max parallel page processes
+ * @property {string} [standardFontDataUrl] - URL to standard fonts directory (auto-detected if not provided)
  */
 
 /**
@@ -64,6 +69,8 @@ export async function convert(pathToPdf, options = {}) {
     disableWorker: true,
     isEvalSupported: false,
     useSystemFonts: true,
+    // Configure standard fonts path to eliminate warnings
+    standardFontDataUrl: `file://${standardFontsPath}/`,
   });
   const pdf = await loadingTask.promise;
 
@@ -134,11 +141,7 @@ export async function convert(pathToPdf, options = {}) {
 
         const base64EncodedImage = `data:image/${
           fmt === 'jpg' ? 'jpeg' : fmt
-        };base64,${
-          finalBuffer.toString(
-            'base64',
-          )
-        }`;
+        };base64,${finalBuffer.toString('base64')}`;
 
         return {
           pageNumber: pageNum,
