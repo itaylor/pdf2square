@@ -8,13 +8,14 @@ import path from 'node:path';
 import sharp from 'sharp';
 import { createCanvas } from 'canvas';
 import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
 // PDF.js (legacy build recommended for Node)
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 
-// Resolve path to pdfjs-dist standard fonts to eliminate warnings
-const pdfjsDistPath = path.dirname(require.resolve('pdfjs-dist/package.json'));
-const standardFontsPath = path.join(pdfjsDistPath, 'standard_fonts');
+// Use bundled standard fonts to eliminate warnings
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const standardFontsPath = path.join(__dirname, 'standard_fonts');
 // Point workerSrc at the installed worker bundle
 // pdfjs.GlobalWorkerOptions.workerSrc = require.resolve(
 //   "pdfjs-dist/legacy/build/pdf.worker.mjs",

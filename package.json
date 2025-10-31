@@ -1,6 +1,6 @@
 {
   "name": "@itaylor/pdf2square",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "CLI and Library: Convert PDF pages to exactly NxN images (letterboxed), using pdfjs + Sharp",
   "type": "module",
   "main": "./lib.js",
@@ -17,7 +17,8 @@
     "lib.d.ts",
     "cli.js",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "standard_fonts"
   ],
   "scripts": {
     "start": "node cli.js",
