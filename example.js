@@ -9,101 +9,173 @@ import { convert } from './lib.js';
 import path from 'node:path';
 
 async function exampleUsage() {
+  console.log('pdf2square Examples');
+  console.log('===================\n');
+
+  // Check if a PDF file was provided as command line argument
+  const pdfFile = process.argv[2];
+
+  if (!pdfFile) {
+    console.log('Usage: node example.js <path-to-pdf-file>');
+    console.log('\nExample: node example.js ./my-document.pdf');
+    console.log(
+      '\nThis will demonstrate various ways to use the pdf2square library.',
+    );
+    return;
+  }
+
   try {
     // Example 1: Basic usage with default options
-    console.log('Example 1: Basic usage');
-    const basicResults = await convert('./test.pdf');
-    console.log(`Converted ${basicResults.length} pages`);
+    console.log('Example 1: Basic usage with default options');
+    console.log('-------------------------------------------');
+    const basicResults = await convert(pdfFile);
+    console.log(`✓ Converted ${basicResults.length} pages from: ${pdfFile}`);
 
-    basicResults.forEach((page) => {
-      console.log(`Page ${page.pageNumber}:`);
-      console.log(`- Image: ${page.base64EncodedImage.substring(0, 50)}...`);
-      console.log(`- Text: ${page.extractedText.substring(0, 100)}...`);
-      console.log('---');
-    });
+    if (basicResults.length > 0) {
+      const firstPage = basicResults[0];
+      console.log(`  - First page: ${firstPage.pageNumber}`);
+      console.log(
+        `  - Image size: ~${
+          Math.round(firstPage.base64EncodedImage.length / 1024)
+        } KB (base64)`,
+      );
+      console.log(
+        `  - Text length: ${firstPage.extractedText.length} characters`,
+      );
+      console.log(
+        `  - Sample text: "${firstPage.extractedText.substring(0, 80)}..."`,
+      );
+    }
 
     // Example 2: Custom options
-    console.log('\nExample 2: Custom options');
-    const customResults = await convert('./test.pdf', {
-      maxPages: 5,
+    console.log('\nExample 2: Custom options (smaller size, JPEG format)');
+    console.log('----------------------------------------------------');
+    const customResults = await convert(pdfFile, {
+      maxPages: 3,
       size: 512,
       dpi: 300,
-      first: 2,
+      first: 1,
       format: 'jpg',
       bg: '#ffffff',
-      concurrency: 2
+      concurrency: 2,
     });
 
-    console.log(`Converted ${customResults.length} pages with custom options`);
+    console.log(
+      `✓ Converted ${customResults.length} pages with custom options`,
+    );
+    console.log(`  - Format: JPEG, Size: 512x512px, DPI: 300`);
 
-    // Example 3: Processing results
-    console.log('\nExample 3: Processing results');
-    const results = await convert('./test.pdf', { maxPages: 3 });
+    // Example 3: Processing and analyzing results
+    console.log('\nExample 3: Text analysis');
+    console.log('------------------------');
+    const analysisResults = await convert(pdfFile, { maxPages: 2 });
 
-    // Save images to files (if needed)
-    for (const page of results) {
-      // Extract base64 data
-      const base64Data = page.base64EncodedImage.replace(/^data:image\/\w+;base64,/, '');
-      const buffer = Buffer.from(base64Data, 'base64');
+    for (const page of analysisResults) {
+      const words = page.extractedText
+        .split(/\s+/)
+        .filter((word) => word.length > 0);
+      const wordCount = words.length;
+      const avgWordLength = words.length > 0
+        ? (words.join('').length / words.length).toFixed(1)
+        : 0;
 
-      // You could save to file if needed:
-      // await fs.writeFile(`page-${page.pageNumber}.png`, buffer);
-
-      console.log(`Page ${page.pageNumber} processed: ${buffer.length} bytes`);
+      console.log(`  Page ${page.pageNumber}:`);
+      console.log(`    - Words: ${wordCount}`);
+      console.log(`    - Characters: ${page.extractedText.length}`);
+      console.log(`    - Average word length: ${avgWordLength} chars`);
+      console.log(
+        `    - Image data size: ~${
+          Math.round(page.base64EncodedImage.length / 1024)
+        } KB`,
+      );
     }
 
-    // Example 4: Text analysis
-    console.log('\nExample 4: Text analysis');
-    const textResults = await convert('./test.pdf', { maxPages: 1 });
+    // Example 4: High quality output with transparent background
+    console.log('\nExample 4: High quality with transparent background');
+    console.log('--------------------------------------------------');
+    const highQualityResults = await convert(pdfFile, {
+      maxPages: 1,
+      size: 1024,
+      dpi: 600,
+      format: 'png',
+      bg: 'transparent',
+    });
 
-    for (const page of textResults) {
-      const wordCount = page.extractedText.split(/\s+/).filter(word => word.length > 0).length;
-      console.log(`Page ${page.pageNumber}: ${wordCount} words extracted`);
-      console.log(`First 200 characters: ${page.extractedText.substring(0, 200)}`);
+    if (highQualityResults.length > 0) {
+      console.log(`✓ Generated high-quality image: 1024x1024px @ 600 DPI`);
+      console.log(`  - Transparent background (PNG format)`);
+      console.log(
+        `  - Image size: ~${
+          Math.round(highQualityResults[0].base64EncodedImage.length / 1024)
+        } KB`,
+      );
     }
-
   } catch (error) {
-    console.error('Error converting PDF:', error.message);
+    console.error('\n❌ Error converting PDF:', error.message);
 
-    // Handle specific errors
-    if (error.message.includes('pdfinfo')) {
-      console.error('Make sure poppler-utils is installed on your system');
+    // Handle specific errors with helpful suggestions
+    if (error.code === 'ENOENT') {
+      console.error(
+        '💡 The PDF file was not found. Please check the file path.',
+      );
     } else if (error.message.includes('Could not determine page count')) {
-      console.error('The PDF file may be corrupted or invalid');
+      console.error(
+        '💡 The PDF file may be corrupted, password-protected, or invalid.',
+      );
+    } else if (error.message.includes('Invalid PDF')) {
+      console.error('💡 The file does not appear to be a valid PDF document.');
+    } else if (error.message.includes('Format must be')) {
+      console.error('💡 Use "png" or "jpg" for the format option.');
+    } else if (error.message.includes('Invalid background color')) {
+      console.error(
+        '💡 Use hex colors (#RRGGBB or #RRGGBBAA) or "transparent".',
+      );
+    } else {
+      console.error('💡 Check that the PDF file is valid and accessible.');
     }
   }
 }
 
-// Example 5: Using in a web service context
-async function webServiceExample(pdfBuffer, options = {}) {
+// Example 5: Using in a web service context (Express.js example)
+async function webServiceExample(filePath, options = {}) {
   try {
-    // Save buffer to temp file first (in real app, you might use a temp file)
-    const tempPath = './temp-pdf.pdf';
-    // await fs.writeFile(tempPath, pdfBuffer); // Uncomment if using buffer
-
-    const results = await convert(tempPath, {
+    const results = await convert(filePath, {
       maxPages: 10,
       size: 896,
       format: 'png',
-      ...options
+      concurrency: 2, // Lower concurrency for server environments
+      ...options,
     });
 
     // Return structured response for API
     return {
       success: true,
-      totalPages: results.length,
-      pages: results.map(page => ({
+      metadata: {
+        originalFile: path.basename(filePath),
+        totalPages: results.length,
+        processedAt: new Date().toISOString(),
+        options: { maxPages: 10, size: 896, format: 'png', ...options },
+      },
+      pages: results.map((page) => ({
         pageNumber: page.pageNumber,
         image: page.base64EncodedImage,
         text: page.extractedText,
-        textLength: page.extractedText.length
-      }))
+        stats: {
+          textLength: page.extractedText.length,
+          wordCount: page.extractedText.split(/\s+/).filter((w) => w.length > 0)
+            .length,
+          imageSize: Math.round(page.base64EncodedImage.length / 1024),
+        },
+      })),
     };
-
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: {
+        message: error.message,
+        type: error.name || 'UnknownError',
+        timestamp: new Date().toISOString(),
+      },
     };
   }
 }
@@ -117,21 +189,20 @@ async function batchProcessExample(pdfPaths) {
       console.log(`Processing ${pdfPath}...`);
       const pages = await convert(pdfPath, {
         maxPages: 5,
-        concurrency: 2 // Lower concurrency when processing multiple PDFs
+        concurrency: 2, // Lower concurrency when processing multiple PDFs
       });
 
       results.push({
         pdfPath,
         success: true,
         pages: pages.length,
-        data: pages
+        data: pages,
       });
-
     } catch (error) {
       results.push({
         pdfPath,
         success: false,
-        error: error.message
+        error: error.message,
       });
     }
   }
@@ -141,7 +212,10 @@ async function batchProcessExample(pdfPaths) {
 
 // Run examples if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  exampleUsage().catch(console.error);
+  exampleUsage().catch((error) => {
+    console.error('\n❌ Unhandled error:', error.message);
+    process.exit(1);
+  });
 }
 
-export { exampleUsage, webServiceExample, batchProcessExample };
+export { batchProcessExample, exampleUsage, webServiceExample };

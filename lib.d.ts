@@ -18,7 +18,7 @@ export interface ConvertOptions {
   maxPages?: number;
   /** Target square size in pixels (default: 896) */
   size?: number;
-  /** Poppler render DPI (higher = crisper text; default: 700) */
+  /** Render DPI (converted to PDF.js scale via dpi/96; higher = crisper text; default: 700) */
   dpi?: number;
   /** First page to convert (1-based, default: 1) */
   first?: number;
@@ -38,5 +38,5 @@ export interface ConvertOptions {
  */
 export declare function convert(
   pathToPdf: string,
-  options?: ConvertOptions
+  options?: ConvertOptions,
 ): Promise<ConvertedPDFPage[]>;

@@ -3,14 +3,14 @@
  * Backend: PDF.js (pdfjs-dist) + node-canvas (+ sharp for letterboxing)
  */
 
-import fs from "node:fs/promises";
-import path from "node:path";
-import sharp from "sharp";
-import { createCanvas } from "canvas";
-import { createRequire } from "node:module";
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import sharp from 'sharp';
+import { createCanvas } from 'canvas';
+import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 // PDF.js (legacy build recommended for Node)
-import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
+import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 // Point workerSrc at the installed worker bundle
 // pdfjs.GlobalWorkerOptions.workerSrc = require.resolve(
 //   "pdfjs-dist/legacy/build/pdf.worker.mjs",
@@ -48,8 +48,8 @@ export async function convert(pathToPdf, options = {}) {
     size: 896,
     dpi: 700, // high for crisp downsampling
     first: 1,
-    format: "png",
-    bg: "#ffffffff",
+    format: 'png',
+    bg: '#ffffffff',
     concurrency: 4,
     ...options,
   };
@@ -67,20 +67,19 @@ export async function convert(pathToPdf, options = {}) {
   });
   const pdf = await loadingTask.promise;
 
-  console.log("Loaded pdf with page count: ", pdf.numPages);
   const totalPages = pdf.numPages || 0;
   if (totalPages <= 0) {
-    throw new Error("Could not determine page count. Is the PDF valid?");
+    throw new Error('Could not determine page count. Is the PDF valid?');
   }
 
   const firstPage = Math.max(1, Number(opts.first));
   const lastPage = Math.min(totalPages, firstPage + Number(opts.maxPages) - 1);
   if (lastPage < firstPage) {
-    throw new Error("No pages to convert with given first/maxPages options.");
+    throw new Error('No pages to convert with given first/maxPages options.');
   }
 
   const fmt = String(opts.format).toLowerCase();
-  if (!["png", "jpg", "jpeg"].includes(fmt)) {
+  if (!['png', 'jpg', 'jpeg'].includes(fmt)) {
     throw new Error("Format must be 'png' or 'jpg'");
   }
   const bg = parseBackground(opts.bg, fmt);
@@ -96,7 +95,7 @@ export async function convert(pathToPdf, options = {}) {
         const page = await pdf.getPage(pageNum);
 
         const canvasFactory = pdf.canvasFactory;
-        const viewport = page.getViewport({ scale: 1.0 });
+        const viewport = page.getViewport({ scale });
         const canvasAndContext = canvasFactory.create(
           viewport.width,
           viewport.height,
@@ -109,19 +108,19 @@ export async function convert(pathToPdf, options = {}) {
         const renderTask = page.render(renderContext);
         await renderTask.promise;
         // Convert the canvas to an image buffer.
-        const renderedPngBuffer = canvasAndContext.canvas.toBuffer("image/png");
+        const renderedPngBuffer = canvasAndContext.canvas.toBuffer('image/png');
 
         // Letterbox to square NxN using sharp (preserve transparency if PNG + bg transparent)
         const size = Number(opts.size);
         let finalBuffer;
-        if (fmt === "png") {
+        if (fmt === 'png') {
           finalBuffer = await sharp(renderedPngBuffer)
-            .resize(size, size, { fit: "contain", background: bg })
+            .resize(size, size, { fit: 'contain', background: bg })
             .png()
             .toBuffer();
         } else {
           finalBuffer = await sharp(renderedPngBuffer)
-            .resize(size, size, { fit: "contain", background: bg })
+            .resize(size, size, { fit: 'contain', background: bg })
             .jpeg({ quality: 95 })
             .toBuffer();
         }
@@ -129,13 +128,17 @@ export async function convert(pathToPdf, options = {}) {
         // Extract text via PDF.js
         const tc = await page.getTextContent();
         const extractedText = (tc.items || [])
-          .map((it) => ("str" in it ? it.str : ""))
-          .join("\n")
+          .map((it) => ('str' in it ? it.str : ''))
+          .join('\n')
           .trim();
 
-        const base64EncodedImage = `data:image/${fmt === "jpg" ? "jpeg" : fmt};base64,${finalBuffer.toString(
-          "base64",
-        )}`;
+        const base64EncodedImage = `data:image/${
+          fmt === 'jpg' ? 'jpeg' : fmt
+        };base64,${
+          finalBuffer.toString(
+            'base64',
+          )
+        }`;
 
         return {
           pageNumber: pageNum,
@@ -157,17 +160,17 @@ export async function convert(pathToPdf, options = {}) {
 // bg: "#RRGGBB" | "#RRGGBBAA" | "transparent"
 function parseBackground(input, fmt) {
   const s = String(input).trim().toLowerCase();
-  if (s === "transparent" || s === "#0000") {
-    if (fmt === "png") {
+  if (s === 'transparent' || s === '#0000') {
+    if (fmt === 'png') {
       return { r: 0, g: 0, b: 0, alpha: 0 };
     } else {
       console.warn(
-        "⚠️ JPEG cannot be transparent; using white background instead.",
+        '⚠️ JPEG cannot be transparent; using white background instead.',
       );
       return { r: 255, g: 255, b: 255, alpha: 1 };
     }
   }
-  const hex = s.startsWith("#") ? s.slice(1) : s;
+  const hex = s.startsWith('#') ? s.slice(1) : s;
   if (![6, 8].includes(hex.length) || !/^[0-9a-f]+$/i.test(hex)) {
     throw new Error(
       "Invalid background color. Use '#RRGGBB', '#RRGGBBAA', or 'transparent'.",
@@ -200,22 +203,4 @@ function pLimit(n) {
       queue.push({ fn, resolve, reject });
       next();
     });
-}
-
-class NodeCanvasFactory {
-  create(width, height) {
-    const canvas = createCanvas(width, height);
-    const context = canvas.getContext("2d", { alpha: true });
-    return { canvas, context };
-  }
-  reset({ canvas, context }, width, height) {
-    canvas.width = width;
-    canvas.height = height;
-  }
-  destroy(obj) {
-    obj.canvas.width = 0;
-    obj.canvas.height = 0;
-    obj.canvas = null;
-    obj.context = null;
-  }
 }

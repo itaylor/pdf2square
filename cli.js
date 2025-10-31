@@ -7,8 +7,7 @@
  *  - outPrefix is optional: if omitted, uses the PDF's basename in the same folder.
  *  - Up to 10 pages, 896x896 PNG, high DPI (700) render for crisp text.
  *
- * Requires system deps:
- *  - poppler-utils (pdftocairo, pdfinfo, pdftotext)
+ * No system dependencies required - uses PDF.js for PDF processing.
  *
  * Examples:
  *   pdf2square input.pdf             # writes input-001.png/.txt, input-002.png/.txt, ...
@@ -16,53 +15,62 @@
  *   pdf2square input.pdf --dpi 800 --bg transparent
  */
 
-import fs from "node:fs/promises";
-import path from "node:path";
-import { Command } from "commander";
-import { convert } from "./lib.js";
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { Command } from 'commander';
+import { convert } from './lib.js';
+
+// Helper function for parsing integers
+function parseIntSafe(value) {
+  const parsed = parseInt(value, 10);
+  if (isNaN(parsed)) {
+    throw new Error(`Invalid number: ${value}`);
+  }
+  return parsed;
+}
 
 const program = new Command()
-  .name("pdf2square")
+  .name('pdf2square')
   .description(
-    "Convert PDF pages to exactly NxN images (letterboxed) + per-page text using Poppler + Sharp",
+    'Convert PDF pages to exactly NxN images (letterboxed) + per-page text using PDF.js + Sharp',
   )
-  .argument("<inputPdf>", "Input PDF file")
+  .argument('<inputPdf>', 'Input PDF file')
   .argument(
-    "[outPrefix]",
-    "Output path/prefix (default: <pdf_basename> next to input)",
+    '[outPrefix]',
+    'Output path/prefix (default: <pdf_basename> next to input)',
   )
   .option(
-    "-n, --max-pages <int>",
-    "Maximum pages to convert (default 10)",
-    parseInt,
+    '-n, --max-pages <int>',
+    'Maximum pages to convert (default 10)',
+    parseIntSafe,
     10,
   )
   .option(
-    "-s, --size <int>",
-    "Target square size in pixels (default 896)",
-    parseInt,
+    '-s, --size <int>',
+    'Target square size in pixels (default 896)',
+    parseIntSafe,
     896,
   )
   .option(
-    "--dpi <int>",
-    "Poppler render DPI (higher = crisper text; default 700)",
-    parseInt,
+    '--dpi <int>',
+    'Render DPI (higher = crisper text; default 700)',
+    parseIntSafe,
     700,
   )
-  .option("--first <int>", "First page to convert (1-based)", parseInt, 1)
-  .option("--format <fmt>", "Output format: png|jpg (default png)", "png")
+  .option('--first <int>', 'First page to convert (1-based)', parseIntSafe, 1)
+  .option('--format <fmt>', 'Output format: png|jpg (default png)', 'png')
   .option(
-    "--bg <hex|transparent>",
+    '--bg <hex|transparent>',
     "Background color (letterbox). Hex #RRGGBB[AA] or 'transparent'",
-    "#ffffffff",
+    '#ffffffff',
   )
   .option(
-    "--concurrency <int>",
-    "Max parallel page processes (default 4)",
-    parseInt,
+    '--concurrency <int>',
+    'Max parallel page processes (default 4)',
+    parseIntSafe,
     4,
   )
-  .option("--keep-intermediate", "Keep intermediate Poppler renders", false)
+  .option('--keep-intermediate', 'Keep intermediate renders', false)
   .showHelpAfterError()
   .parse(process.argv);
 
@@ -96,7 +104,7 @@ const [inputPdf, outPrefixArg] = program.args;
     });
 
     if (results.length === 0) {
-      throw new Error("No pages were converted.");
+      throw new Error('No pages were converted.');
     }
 
     // Write results to files (maintaining same naming convention)
@@ -105,10 +113,10 @@ const [inputPdf, outPrefixArg] = program.args;
 
     await Promise.all(
       results.map(async (result) => {
-        const pageSuffix = String(result.pageNumber).padStart(3, "0");
+        const pageSuffix = String(result.pageNumber).padStart(3, '0');
         const imgOut = path.join(
           outDir,
-          `${base}-${pageSuffix}.${fmt === "jpg" ? "jpg" : fmt}`,
+          `${base}-${pageSuffix}.${fmt === 'jpg' ? 'jpg' : fmt}`,
         );
         const txtOut = path.join(outDir, `${base}-${pageSuffix}.txt`);
 
@@ -117,7 +125,7 @@ const [inputPdf, outPrefixArg] = program.args;
           /^data:image\/[^;]+;base64,(.+)$/,
         );
         if (base64Match) {
-          const imageBuffer = Buffer.from(base64Match[1], "base64");
+          const imageBuffer = Buffer.from(base64Match[1], 'base64');
           await fs.writeFile(imgOut, imageBuffer);
         }
 
@@ -130,7 +138,7 @@ const [inputPdf, outPrefixArg] = program.args;
     const lastPage = results[results.length - 1].pageNumber;
     console.log(`✅ Done. Wrote pages ${firstPage}-${lastPage} → ${outDir}`);
   } catch (err) {
-    console.error("❌", err.message || err, err.stack || "");
+    console.error('❌', err.message || err, err.stack || '');
     process.exit(1);
   }
 })();

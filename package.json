@@ -12,9 +12,45 @@
   "bin": {
     "pdf2square": "./cli.js"
   },
+  "files": [
+    "lib.js",
+    "lib.d.ts",
+    "cli.js",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "start": "node cli.js"
+    "start": "node cli.js",
+    "test": "node --test test/*.test.js",
+    "example": "node example.js",
+    "format": "deno fmt --options-single-quote"
   },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "keywords": [
+    "pdf",
+    "image",
+    "convert",
+    "square",
+    "letterbox",
+    "cli",
+    "library",
+    "text-extraction",
+    "pdfjs",
+    "sharp",
+    "base64"
+  ],
+  "author": "itaylor",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/itaylor/pdf2square.git"
+  },
+  "bugs": {
+    "url": "https://github.com/itaylor/pdf2square/issues"
+  },
+  "homepage": "https://github.com/itaylor/pdf2square#readme",
   "dependencies": {
     "canvas": "^3.2.0",
     "commander": "^12.1.0",
