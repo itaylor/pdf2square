@@ -10,7 +10,7 @@
     "./cli": "./cli.js"
   },
   "bin": {
-    "pdf2square": "./cli.js"
+    "pdf2square": "cli.js"
   },
   "files": [
     "lib.js",
